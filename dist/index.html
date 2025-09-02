@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Epic Castle Scene</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        #canvas-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            color: white;
+            font-size: 18px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        @media (max-width: 768px) {
+            #ui-overlay {
+                font-size: 14px;
+                top: 10px;
+                left: 10px;
+            }
+        }
+
+        #scoreboard {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            z-index: 100;
+        }
+
+        @media (max-width: 768px) {
+            #scoreboard {
+                top: 10px;
+                right: 10px;
+                padding: 10px;
+                font-size: 12px;
+                min-width: 120px;
+            }
+        }
+
+        #dialogue-box {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            display: none;
+            z-index: 100;
+        }
+
+        @media (max-width: 768px) {
+            #dialogue-box {
+                bottom: 10px;
+                left: 10px;
+                right: 10px;
+                transform: none;
+                max-width: none;
+                padding: 15px;
+                font-size: 14px;
+            }
+        }
+
+        #dialogue-box.show {
+            display: block;
+        }
+
+        .dialogue-name {
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .dialogue-text {
+            line-height: 1.5;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            z-index: 100;
+        }
+
+        @media (max-width: 768px) {
+            #controls {
+                bottom: 10px;
+                left: 10px;
+                padding: 10px;
+                font-size: 11px;
+                max-width: 150px;
+            }
+            
+            .desktop-controls {
+                display: none;
+            }
+            
+            .mobile-controls {
+                display: block;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .desktop-controls {
+                display: block;
+            }
+            
+            .mobile-controls {
+                display: none;
+            }
+        }
+
+        .projectile {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .balloon {
+            position: absolute;
+            width: 30px;
+            height: 40px;
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #ee5a52);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            cursor: pointer;
+            transition: transform 0.1s;
+            z-index: 40;
+            touch-action: manipulation;
+        }
+
+        .balloon:hover {
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            .balloon {
+                min-width: 40px;
+                min-height: 50px;
+            }
+            
+            /* Mobile-specific button styles */
+            button {
+                min-height: 44px;
+                min-width: 44px;
+                font-size: 16px;
+                touch-action: manipulation;
+            }
+            
+            /* Prevent text selection on mobile */
+            * {
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+            
+            /* Improve touch targets */
+            #scoreboard div, #controls div {
+                padding: 8px 0;
+                min-height: 20px;
+            }
+        }
+
+        .balloon::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 15px;
+            background: #333;
+        }
+    </style>
+  <script type="module" crossorigin src="/assets/index-DecTKxQd.js"></script>
+</head>
+<body>
+    <div id="canvas-container">
+        <canvas id="castle-canvas"></canvas>
+        
+        <div id="ui-overlay">
+            <div>Epic Castle Scene</div>
+            <div style="font-size: 14px; margin-top: 5px;">Click to explore • Scroll to zoom</div>
+        </div>
+
+        <div id="scoreboard">
+            <div>🎈 Balloon Popper</div>
+            <div>Level: <span id="level">1</span></div>
+            <div>Time: <span id="timer">60</span>s</div>
+            <div>Score: <span id="score">0</span></div>
+            <div>Balloons: <span id="balloons-left">10</span></div>
+        </div>
+
+        <div id="dialogue-box">
+            <div class="dialogue-name" id="dialogue-name"></div>
+            <div class="dialogue-text" id="dialogue-text"></div>
+        </div>
+
+        <div id="controls">
+            <div>🎮 Controls:</div>
+            <div class="desktop-controls">• Click & drag to rotate</div>
+            <div class="desktop-controls">• Scroll to zoom</div>
+            <div class="mobile-controls">• Touch & drag to rotate</div>
+            <div class="mobile-controls">• Pinch to zoom</div>
+            <div>• Tap characters to talk</div>
+            <div>• Tap balloons to pop them</div>
+        </div>
+    </div>
+
+</body>
+</html>

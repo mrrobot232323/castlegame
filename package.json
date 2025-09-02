@@ -1,0 +1,19 @@
+{
+  "name": "epic-castle-scene",
+  "version": "1.0.0",
+  "description": "An epic storybook castle scene with interactive minigames",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@types/three": "^0.158.0",
+    "three": "^0.158.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "vite": "^5.4.19"
+  }
+}
