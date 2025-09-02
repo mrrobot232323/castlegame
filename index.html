@@ -99,6 +99,7 @@
             gap: 12px;
             padding: 0 14px;
             z-index: 100;
+            flex-wrap: wrap;
         }
 
         .score-panel {
@@ -150,7 +151,7 @@
         .score-panel.bump { animation: bump 240ms ease-out; }
 
         #center-panel {
-            flex: 1;
+            flex: 1 1 auto;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -196,11 +197,18 @@
                 padding: 0 8px;
             }
             .score-panel {
-                min-width: 92px;
+                min-width: 86px;
                 padding: 10px 12px;
             }
             .score-panel .value { font-size: 20px; }
+            #center-panel {
+                flex: 1 1 100%;
+                order: 3; /* place center row under panels on small screens */
+                margin-top: 6px;
+            }
             #center-panel .center-row { gap: 12px; padding: 8px 12px; font-size: 13px; }
+            #guard-panel { order: 1; }
+            #player-panel { order: 2; }
         }
 
         #dialogue-box {

@@ -18,6 +18,7 @@ export class BalloonGame {
     private guardInterval: number | null = null;
     private prevScore: number = 0;
     private prevGuardScore: number = 0;
+    private handlersAttached: boolean = false;
 
     constructor() {
         this.scoreElement = document.getElementById('score') as HTMLElement;
@@ -29,6 +30,51 @@ export class BalloonGame {
         this.timerElement = document.getElementById('timer') as HTMLElement;
         this.initLevelConfig();
         this.init();
+    }
+
+    private getSafePaddings(): { topPadding: number; bottomPadding: number; leftPadding: number; rightPadding: number } {
+        const isMobile = window.innerWidth <= 768;
+        // Defaults as fallback
+        let topPadding = isMobile ? 80 : 100;
+        let bottomPadding = isMobile ? 100 : 120;
+        let leftPadding = isMobile ? 120 : 200;
+        let rightPadding = isMobile ? 120 : 150;
+
+        try {
+            const hud = document.getElementById('hud');
+            if (hud) {
+                const r = hud.getBoundingClientRect();
+                // space below HUD
+                topPadding = Math.max(topPadding, Math.ceil(r.bottom) + 8);
+                // If panels consume side space, account for them
+                const leftPanel = document.getElementById('guard-panel');
+                const rightPanel = document.getElementById('player-panel');
+                if (leftPanel) {
+                    const lr = leftPanel.getBoundingClientRect();
+                    leftPadding = Math.max(leftPadding, Math.ceil(lr.right) + 8);
+                }
+                if (rightPanel) {
+                    const rr = rightPanel.getBoundingClientRect();
+                    rightPadding = Math.max(rightPadding, Math.ceil(window.innerWidth - rr.left) + 8);
+                }
+            }
+
+            const controls = document.getElementById('controls');
+            if (controls) {
+                const cr = controls.getBoundingClientRect();
+                // distance from bottom edge to top of controls
+                const fromBottom = Math.max(0, Math.ceil(window.innerHeight - cr.top));
+                bottomPadding = Math.max(bottomPadding, fromBottom + 8);
+            }
+        } catch { /* no-op */ }
+
+        // Ensure paddings do not exceed viewport
+        leftPadding = Math.min(leftPadding, Math.floor(window.innerWidth * 0.45));
+        rightPadding = Math.min(rightPadding, Math.floor(window.innerWidth * 0.45));
+        topPadding = Math.min(topPadding, Math.floor(window.innerHeight * 0.5));
+        bottomPadding = Math.min(bottomPadding, Math.floor(window.innerHeight * 0.5));
+
+        return { topPadding, bottomPadding, leftPadding, rightPadding };
     }
 
     private initLevelConfig(): void {
@@ -174,14 +220,8 @@ export class BalloonGame {
         balloon.style.width = `${config.size}px`;
         balloon.style.height = `${config.size}px`;
         
-        // Random position, avoiding UI elements
-        const isMobile = window.innerWidth <= 768;
-        
-        // Adjust padding based on device type
-        const topPadding = isMobile ? 80 : 100; // Space for top UI
-        const bottomPadding = isMobile ? 100 : 120; // Space for bottom UI
-        const leftPadding = isMobile ? 120 : 200; // Space for left UI
-        const rightPadding = isMobile ? 120 : 150; // Space for right UI
+        // Random position, avoiding UI elements using dynamic safe paddings
+        const { topPadding, bottomPadding, leftPadding, rightPadding } = this.getSafePaddings();
         
         const x = leftPadding + Math.random() * (window.innerWidth - config.size - leftPadding - rightPadding);
         const y = topPadding + Math.random() * (window.innerHeight - config.size - topPadding - bottomPadding);
@@ -300,21 +340,25 @@ export class BalloonGame {
     }
 
     private setupClickHandler(): void {
+        if (this.handlersAttached) return;
+
         document.addEventListener('click', (e) => {
             if (!this.isActive) return;
-            
+
             // Create projectile effect
             this.createProjectile(e.clientX, e.clientY);
         });
-        
+
         // Touch events for mobile
         document.addEventListener('touchstart', (e) => {
             if (!this.isActive) return;
-            
+
             e.preventDefault();
             const touch = e.touches[0];
             this.createProjectile(touch.clientX, touch.clientY);
         }, { passive: false });
+
+        this.handlersAttached = true;
     }
 
     private createProjectile(startX: number, startY: number): void {
@@ -658,22 +702,16 @@ export class BalloonGame {
     }
 
     public handleResize(): void {
-        // Reposition existing balloons to avoid UI elements
+        // Reposition existing balloons to avoid UI elements using dynamic paddings
+        const pads = this.getSafePaddings();
         this.balloons.forEach(balloon => {
-            const isMobile = window.innerWidth <= 768;
-            const topPadding = isMobile ? 80 : 100;
-            const bottomPadding = isMobile ? 100 : 120;
-            const leftPadding = isMobile ? 120 : 200;
-            const rightPadding = isMobile ? 120 : 150;
-            
-            const size = parseInt(balloon.style.width);
-            const x = leftPadding + Math.random() * (window.innerWidth - size - leftPadding - rightPadding);
-            const y = topPadding + Math.random() * (window.innerHeight - size - topPadding - bottomPadding);
-            
-            // Ensure balloon is within safe bounds
-            const safeX = Math.max(leftPadding, Math.min(x, window.innerWidth - size - rightPadding));
-            const safeY = Math.max(topPadding, Math.min(y, window.innerHeight - size - bottomPadding));
-            
+            const size = parseInt(balloon.style.width) || parseInt(getComputedStyle(balloon).width) || 40;
+            const x = pads.leftPadding + Math.random() * (window.innerWidth - size - pads.leftPadding - pads.rightPadding);
+            const y = pads.topPadding + Math.random() * (window.innerHeight - size - pads.topPadding - pads.bottomPadding);
+
+            const safeX = Math.max(pads.leftPadding, Math.min(x, window.innerWidth - size - pads.rightPadding));
+            const safeY = Math.max(pads.topPadding, Math.min(y, window.innerHeight - size - pads.bottomPadding));
+
             balloon.style.left = `${safeX}px`;
             balloon.style.top = `${safeY}px`;
         });

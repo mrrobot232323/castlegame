@@ -323,7 +323,12 @@ export class DialogueSystem {
         // Update any ongoing dialogue effects
         if (this.isActive && this.currentDialogue) {
             // Add subtle animation to dialogue box
-            this.dialogueBox.style.transform = `translateX(-50%) translateY(${Math.sin(Date.now() * 0.003) * 2}px)`;
+            const wobbleY = Math.sin(Date.now() * 0.003) * 2;
+            const isMobile = window.innerWidth <= 768;
+            // On mobile layout the box is left-aligned via CSS; don't shift horizontally.
+            this.dialogueBox.style.transform = isMobile
+                ? `translateY(${wobbleY}px)`
+                : `translateX(-50%) translateY(${wobbleY}px)`;
         }
     }
 }
