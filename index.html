@@ -37,16 +37,29 @@
         .modal-row { font-size: 16px; margin: 6px 0; }
         .modal-actions { margin-top: 16px; display: flex; gap: 12px; justify-content: center; }
         .btn {
-            border: none;
-            padding: 10px 18px;
-            border-radius: 10px;
+            padding: 12px 22px;
+            border-radius: 12px;
             color: #fff;
             cursor: pointer;
-            font-size: 15px;
-            transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+            min-width: 120px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
-        .btn:hover { transform: translateY(-1px); }
-        .btn:active { transform: translateY(0); filter: brightness(0.95); }
+        .btn:active { 
+            transform: translateY(1px); 
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); 
+        }
+        @media (hover: hover) {
+            .btn:hover { 
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+            }
+        }
         .btn-primary { background: linear-gradient(135deg, #00c6ff, #0072ff); box-shadow: 0 8px 18px rgba(0,114,255,0.35); }
         .btn-danger { background: linear-gradient(135deg, #ff6b6b, #ff3b3b); box-shadow: 0 8px 18px rgba(255,59,59,0.35); }
 
@@ -81,23 +94,52 @@
 
         @media (max-width: 768px) {
             #ui-overlay {
-                font-size: 14px;
-                top: 10px;
-                left: 10px;
+                font-size: 13px;
+                top: 8px;
+                left: 8px;
+                right: 8px;
+            }
+            
+            .modal-card {
+                padding: 18px 16px;
+                width: 92%;
+                max-width: 400px;
+            }
+            
+            .modal-title {
+                font-size: 22px;
+                margin-bottom: 10px;
+            }
+            
+            .modal-sub {
+                font-size: 15px;
+                margin-bottom: 14px;
+            }
+            
+            .modal-row {
+                font-size: 15px;
+                margin: 8px 0;
+            }
+            
+            .btn {
+                padding: 14px 20px;
+                font-size: 15px;
+                min-width: 140px;
             }
         }
 
         /* Top HUD: Guard (left), Center (timer/level/balloons), Player (right) */
         #hud {
             position: absolute;
-            top: 12px;
+            top: 8px;
             left: 0;
             right: 0;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 12px;
-            padding: 0 14px;
+            gap: 8px;
+            padding: 0 8px;
+            -webkit-tap-highlight-color: transparent;
             z-index: 100;
             flex-wrap: wrap;
         }
@@ -155,6 +197,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 4px 0;
         }
 
         #center-panel .center-row {
@@ -178,6 +223,26 @@
             border: 1px solid rgba(255,255,255,0.18);
         }
 
+        /* Touch ripple effect */
+        .touch-ripple {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: scale(0);
+            animation: ripple 0.6s ease-out;
+            z-index: 1000;
+        }
+        
+        @keyframes ripple {
+            to {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+        
         /* Timer danger pulse */
         @keyframes pulse {
             0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.5); }
@@ -195,6 +260,20 @@
                 top: 8px;
                 gap: 8px;
                 padding: 0 8px;
+            }
+            
+            /* Improve touch targets for mobile */
+            .balloon {
+                min-width: 50px !important;
+                min-height: 60px !important;
+            }
+            
+            /* Prevent text selection on tap */
+            * {
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
             }
             .score-panel {
                 min-width: 86px;

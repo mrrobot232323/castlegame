@@ -342,21 +342,37 @@ export class BalloonGame {
     private setupClickHandler(): void {
         if (this.handlersAttached) return;
 
-        document.addEventListener('click', (e) => {
+        const handleInteraction = (x: number, y: number, isTouch: boolean = false) => {
             if (!this.isActive) return;
-
+            
+            // Show touch feedback on mobile
+            if (isTouch && window.innerWidth <= 768) {
+                this.showTouchFeedback(x, y);
+            }
+            
             // Create projectile effect
-            this.createProjectile(e.clientX, e.clientY);
+            this.createProjectile(x, y);
+        };
+
+        // Mouse click handler
+        document.addEventListener('click', (e) => {
+            handleInteraction(e.clientX, e.clientY);
         });
 
-        // Touch events for mobile
+        // Touch handler for mobile
         document.addEventListener('touchstart', (e) => {
-            if (!this.isActive) return;
-
-            e.preventDefault();
-            const touch = e.touches[0];
-            this.createProjectile(touch.clientX, touch.clientY);
+            if (e.touches.length === 1) {  // Only handle single touch
+                e.preventDefault();
+                const touch = e.touches[0];
+                handleInteraction(touch.clientX, touch.clientY, true);
+            }
         }, { passive: false });
+
+        // Prevent context menu on long press
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            return false;
+        });
 
         this.handlersAttached = true;
     }
@@ -415,11 +431,16 @@ export class BalloonGame {
         // Play sound effect
         this.playPopSound();
         
-        // Create pop effect
+        // Create visual effects
         this.createPopEffect(x, y);
+        if (window.innerWidth <= 768) {  // Only show touch feedback on mobile
+            this.showTouchFeedback(x, y);
+        }
         
         // Remove balloon
-        document.body.removeChild(balloon);
+        if (balloon.parentNode) {
+            document.body.removeChild(balloon);
+        }
         this.balloons = this.balloons.filter(b => b !== balloon);
         
         // Update score (more points for higher levels)
@@ -457,9 +478,30 @@ export class BalloonGame {
         }
     }
 
+    private showTouchFeedback(x: number, y: number): void {
+        try {
+            // Create a ripple effect at the touch point
+            const ripple = document.createElement('div');
+            ripple.className = 'touch-ripple';
+            ripple.style.left = `${x - 30}px`;
+            ripple.style.top = `${y - 30}px`;
+            
+            document.body.appendChild(ripple);
+            
+            // Remove the ripple after animation completes
+            setTimeout(() => {
+                if (ripple.parentNode) {
+                    document.body.removeChild(ripple);
+                }
+            }, 600);
+        } catch (e) {
+            console.warn('Error showing touch feedback:', e);
+        }
+    }
+
     private createPopEffect(x: number, y: number): void {
         // Create multiple particles for pop effect
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 12; i++) {
             const particle = document.createElement('div');
             particle.style.position = 'absolute';
             particle.style.width = '4px';
@@ -512,6 +554,12 @@ export class BalloonGame {
         });
         this.balloons = [];
         
+        // Remove any existing modals first
+        const existingModal = document.querySelector('.modal-overlay');
+        if (existingModal && existingModal.parentNode) {
+            existingModal.parentNode.removeChild(existingModal);
+        }
+        
         // Styled level complete modal
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
@@ -522,30 +570,56 @@ export class BalloonGame {
         const winner = player === guard ? 'It\'s a tie!' : (player > guard ? 'You win this round!' : 'Guard wins this round!');
 
         if (this.currentLevel < 10) {
+            const nextLevel = this.currentLevel + 1;
             card.innerHTML = `
                 <div class="modal-title">🎈 Level ${this.currentLevel} Complete!</div>
                 <div class="modal-sub" style="color:#ffd700;">${winner}</div>
                 <div class="modal-row">Your Score: <b>${this.score}</b></div>
                 <div class="modal-row">Guard Score: <b>${this.guardScore}</b></div>
-                <div class="modal-row">Next Level: <b>${this.currentLevel + 1}</b></div>
+                <div class="modal-row">Next Level: <b>${nextLevel}</b></div>
                 <div class="modal-actions">
-                    <button class="btn btn-primary" onclick="this.closest('.modal-overlay')?.remove(); window.balloonGame.startLevel(${this.currentLevel + 1})">Next Level</button>
+                    <button id="next-level-btn" class="btn btn-primary">Next Level</button>
                 </div>
             `;
+            
+            overlay.appendChild(card);
+            document.body.appendChild(overlay);
+            
+            // Add proper event listener for mobile compatibility
+            const nextLevelBtn = document.getElementById('next-level-btn');
+            if (nextLevelBtn) {
+                const nextLevelHandler = () => {
+                    overlay.remove();
+                    this.startLevel(nextLevel);
+                    nextLevelBtn.removeEventListener('click', nextLevelHandler);
+                    nextLevelBtn.removeEventListener('touchend', nextLevelHandler);
+                };
+                nextLevelBtn.addEventListener('click', nextLevelHandler);
+                nextLevelBtn.addEventListener('touchend', nextLevelHandler);
+            }
         } else {
             card.innerHTML = `
-                <div class="modal-title">🎈 Congratulations!</div>
+                <div class="modal-title">🎉 Congratulations!</div>
                 <div class="modal-sub">You've completed all 10 levels!</div>
                 <div class="modal-row">Your Final Score: <b>${this.score}</b></div>
                 <div class="modal-row">Guard Final Score: <b>${this.guardScore}</b></div>
-                <div class="modal-row" style="color:#ffd700;">${winner}</div>
+                <div class="modal-row" style="color:#ffd700; font-size: 1.2em; margin: 15px 0;">${winner}</div>
                 <div class="modal-actions">
-                    <button class="btn btn-danger" onclick="location.reload()">Play Again</button>
+                    <button id="play-again-btn" class="btn btn-primary">Play Again</button>
                 </div>
             `;
+            
+            overlay.appendChild(card);
+            document.body.appendChild(overlay);
+            
+            // Add proper event listener for mobile compatibility
+            const playAgainBtn = document.getElementById('play-again-btn');
+            if (playAgainBtn) {
+                const playAgainHandler = () => location.reload();
+                playAgainBtn.addEventListener('click', playAgainHandler);
+                playAgainBtn.addEventListener('touchend', playAgainHandler);
+            }
         }
-        overlay.appendChild(card);
-        document.body.appendChild(overlay);
     }
 
     private updateUI(): void {
